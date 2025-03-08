@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kube-apiserver
+  namespace: kube-system
+  labels:
+    component: kube-apiserver
+spec:
+  containers:
+  - name: kube-apiserver
+    image: k8s.gcr.io/kube-apiserver:v1.24.0
+    command:
+    - /bin/sh
+    - -c
+    - |
+      kube-apiserver \
+        --advertise-address=$(POD_IP) \
+        --allow-privileged=true \
+        --apiserver-count=1 \
+        --authorization-mode=Node,RBAC \
+        --cloud-provider=external \
+        --enable-admission-plugins=NodeRestriction \
+        --enable-bootstrap-token-auth=true \
+        --enable-dynamic-provisioning=true \
+        --etcd-servers=http://localhost:2379 \
+        --insecure-port=0 \
+        --kubelet-client-certificate=/etc/kubernetes/pki/apiserver.crt \
+        --kubelet-client-key=/etc/kubernetes/pki/apiserver.key \
+        --pod-network-cidr=192.168.0.0/16 \
+        --secure-port=6443 \
+        --service-cluster-ip-range=10.96.0.0/12 \
+        --tls-cert-file=/etc/kubernetes/pki/apiserver.crt \
+        --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
+    volumeMounts:
+    - mountPath: /etc/kubernetes/pki
+      name: k8s-certs
+  volumes:
+  - name: k8s-certs
+    hostPath:
+      path: /etc/kubernetes/pki
+      type: Directory
